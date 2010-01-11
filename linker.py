@@ -1,5 +1,7 @@
 #! /usr/bin/env python
 
+import allocator
+
 # segments table information
 segmentTable = {}
 
@@ -65,7 +67,14 @@ class Relocation() :
         self.ref = ref
         self.type = type
 
-        
+
+class SymbolReloc() :
+    'symbol relocation information.'
+    def __init__(self, loc, ref) :
+        self.loc = loc
+        self.ref = ref
+
+
 def readFile (fileName) :
     'read infomation from file.'
     fp = open(fileName)
@@ -134,17 +143,28 @@ def readFile (fileName) :
     fp.close()
 
 
-class SymbolReloc() :
-    'symbol relocation information.'
-    def __init__(self, loc, ref) :
-        self.loc = loc
-        self.ref = ref
-
 def my_cmp(s1, s2) :
     return cmp(s1.loc, s2.loc)
+
+def writeFile_4_1(fileName) :
+    'write object code to file. (Project 4.1)'
+    fp = open(fileName, 'w')
+
+    alloc = allocator.Allocator()
+    statistic = alloc.allocator_4_1(segmentTable)
+
+    fp.write('.text %x - %x\n' %
+             (statistic.textStartAddr, statistic.textEndAddr))
+    fp.write('.data %x - %x\n' %
+             (statistic.dataStartAddr, statistic.dataEndAddr))
+    fp.write('.bss %x - %x\n' %
+             (statistic.bssStartAddr, statistic.bssEndAddr))
+
+    fp.close()
     
-def writeFile(fileName) :
-    'write result to file.'
+    
+def writeFile_3_1(fileName) :
+    'write result to file. (Project 3.1)'
     fp = open(fileName, 'w')
 
     for key in segmentTable:
@@ -189,4 +209,4 @@ if __name__ == '__main__' :
     #info = SegmentInfo('.text', 1000, 2500, 'RW')
     #print info.name, info.addr, info.length, info.readable, info.writable, info.present
     readFile('example.txt')
-    writeFile('output.txt')
+    writeFile_4_1('output.txt')
