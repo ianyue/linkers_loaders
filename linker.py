@@ -11,14 +11,17 @@ symbolTable = {}
 # relocation information
 relocation = {}
 
+# segment data
+segmentData = {}
+
 # code segment data
-textData = ''
+#textData = ''
 
 # data segment data
-dataData = ''
+#dataData = ''
 
 # bss segment data
-bssData = ''
+#bssData = ''
 
 class SegmentInfo() :
     'Segment Infomation'
@@ -77,7 +80,7 @@ class SymbolReloc() :
 
 def readFile (fileName) :
     'read infomation from file.'
-    global segmentTable, symbolTable, relocation, textData, dataData, bssData
+    global segmentTable, symbolTable, relocation
     fp = open(fileName)
     magicNumber = fp.readline()
     print magicNumber
@@ -124,31 +127,40 @@ def readFile (fileName) :
         data += line.strip() + ' '
 
     data = data.strip()
+    readData(segmentTable, data)
+
+    fp.close()
+
+def readData(segmentTable, data) :
+    'read segment data'
+    global segmentData
     
     for key in segmentTable:
-        #global textData, dataData, bssData
         info = segmentTable[key]
         count = int(info.length, 16)
         if count == 0:
             continue
-        
-        if info.name == '.text' :
-            textData += data[:3 * count - 1] + ' '
-            data = data[3 * count:]
-        elif info.name == '.data' :
-            dataData += data[:3 * count - 1] + ' '
-            data = data[3 * count:]
-        elif info.name == '.bss' :
-            bssData += data[:3 * count - 1] + ' '
-            data = data[3 * count:]
 
-    textData = textData.strip()
-    dataData = dataData.strip()
-    bssData = bssData.strip()
+        if info.name not in segmentData :
+            segmentData[info.name] = ''
+            
+        segmentData[info.name] += data[:(3 * count - 1)] + ' '
+        data = data[3 * count:]
+        #if info.name == '.text' :
+        #    textData += data[:3 * count - 1] + ' '
+        #    data = data[3 * count:]
+        #elif info.name == '.data' :
+        #    dataData += data[:3 * count - 1] + ' '
+        #    data = data[3 * count:]
+        #elif info.name == '.bss' :
+        #    bssData += data[:3 * count - 1] + ' '
+        #    data = data[3 * count:]
 
-    fp.close()
-
-
+    for key in segmentData :
+        segmentData[key] = segmentData[key].strip()
+    #textData = textData.strip()
+    #dataData = dataData.strip()
+    #bssData = bssData.strip()
 
 # write object file routines
 def my_cmp(s1, s2) :
@@ -231,7 +243,5 @@ if __name__ == '__main__' :
 
     readFile('example.txt')
     writeFile_4_2('output.txt')
-    print textData
-    print dataData
-    print bssData
-
+    for key in segmentData :
+        print key, segmentData[key]

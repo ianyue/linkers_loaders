@@ -77,3 +77,6 @@ class Allocator(object) :
                 
 
         return statistic
+
+    def arbitraryAllocator(self, segmentTable, symbolTable) :
+        pass
