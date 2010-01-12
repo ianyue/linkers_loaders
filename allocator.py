@@ -31,19 +31,21 @@ class Allocator(object) :
 
     def __init__(self) :
         pass
+
     
-    def allocator_4_1(self, segmentTable) :
+    def basicAllocator(self, segmentTable) :
+        'allocator for project 4.1.'
         statistic = Statistic()
         
         for key in segmentTable :
             info = segmentTable[key]
             
             if info.name == '.text' :
-                statistic.textSize += int(info.length)
+                statistic.textSize += int(info.length, 16)
             elif info.name == '.data' :
-                statistic.dataSize += int(info.length)
+                statistic.dataSize += int(info.length, 16)
             elif info.name == '.bss' :
-                statistic.bssSize += int(info.length)
+                statistic.bssSize += int(info.length, 16)
 
         statistic.textStartAddr = 0x1000
         statistic.textEndAddr =\
@@ -59,4 +61,19 @@ class Allocator(object) :
         statistic.bssEndAddr =\
                   statistic.bssStartAddr + statistic.bssSize
         
+        return statistic
+
+    def commonBlockAllocator(self, segmentTable, symbolTable) :
+        statistic = self.basicAllocator(segmentTable)
+        for key in symbolTable :
+            symbol = symbolTable[key]
+            if symbol.defined == False and \
+                   int(symbol.value, 16) != 0 :
+                statistic.bssSize += int(symbol.value, 16)
+
+        # update bssEndAddr
+        statistic.bssEndAddr =\
+                  statistic.bssStartAddr + statistic.bssSize
+                
+
         return statistic
