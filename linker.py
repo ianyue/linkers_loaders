@@ -237,7 +237,21 @@ def writeFile_4_2(fileName) :
     fp.write('.bss %x - %x\n' %
              (statistic.bssStartAddr, statistic.bssEndAddr))
     fp.close()
-    
+
+def writeFile_4_3(fileName) :
+    'write object code to file. (Project 4.3)'
+    fp = open(fileName, 'w')
+
+    alloc = allocator.Allocator()
+
+    statistic = alloc.arbitraryAllocator(segmentTable, symbolTable)
+    fp.write('RP: %x - %x\n' %
+             (statistic.RPStartAddr, statistic.RPEndAddr))
+    fp.write('RWP: %x - %x\n' %
+             (statistic.RWPStartAddr, statistic.RWPEndAddr))
+    fp.write('RW: %x - %x\n' %
+             (statistic.RWStartAddr, statistic.RWEndAddr))
+    fp.close()
 
 if __name__ == '__main__' :
 

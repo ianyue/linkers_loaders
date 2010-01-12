@@ -26,6 +26,20 @@ class Statistic(object) :
     #def setBssSize(self, bssSize) :
     #    self.bssSize = bssSize
 
+class AttributeStatistic(object) :
+    def __init__(self) :
+        self.RPSize = 0
+        self.RWSize = 0
+        self.RWPSize = 0
+
+        self.RPStartAddr = 0
+        self.RWStartAddr = 0
+        self.RWPStartAddr = 0
+
+        self.RPEndAddr = 0
+        self.RWEndAddr = 0
+        self.RWPEndAddr = 0
+
         
 class Allocator(object) :
 
@@ -79,4 +93,49 @@ class Allocator(object) :
         return statistic
 
     def arbitraryAllocator(self, segmentTable, symbolTable) :
-        pass
+        'arbitrary allocator'
+        statistic = AttributeStatistic()
+        
+        for key in segmentTable :
+            info = segmentTable[key]
+
+            if info.readable == True and \
+               info.present == True  and \
+               info.writable == False :
+                statistic.RPSize += int(info.length, 16)
+            elif info.readable == True and \
+                 info.writable == True and \
+                 info.present == True :
+                statistic.RWPSize += int(info.length, 16)
+            elif info.readable == True and \
+                 info.writable == True and \
+                 info.present == False :
+                statistic.RWSize += int(info.length, 16)
+
+        statistic.RPStartAddr = 0x1000
+        statistic.RPEndAddr =\
+                  statistic.RPStartAddr + statistic.RPSize
+
+        multiple = ((statistic.RPEndAddr + 1) / 0x1000) + 1
+        statistic.RWPStartAddr = multiple * 0x1000
+        statistic.RWPEndAddr =\
+                  statistic.RWPStartAddr + statistic.RWPSize
+        
+        multiple = ((statistic.RWPEndAddr + 1) / 4) + 1
+        statistic.RWStartAddr = multiple * 4
+        statistic.RWEndAddr =\
+                  statistic.RWStartAddr + statistic.RWSize
+
+        # allocate common block
+        for key in symbolTable :
+            symbol = symbolTable[key]
+            if symbol.defined == False and \
+                   int(symbol.value, 16) != 0 :
+                statistic.RWSize += int(symbol.value, 16)
+
+        # update bssEndAddr
+        statistic.RWEndAddr =\
+                  statistic.RWStartAddr + statistic.RWSize
+        
+        return statistic
+        
