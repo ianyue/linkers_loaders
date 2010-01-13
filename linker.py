@@ -1,5 +1,7 @@
 #! /usr/bin/env python
 
+import re
+
 import allocator
 
 # object information
@@ -96,12 +98,25 @@ class SymbolReloc() :
         self.loc = loc
         self.ref = ref
 
+def getline (fp) :
+    line = fp.readline()
+    # checker comment and blank line
+    while True :
+        m = re.match('\s*#', line)
+        n = re.match('\s+', line)
+        if m is not None or n is not None:
+            line = fp.readline()
+        else :
+            break
+
+    line = line.strip()
+    return line
 
 def readObj (fileName) :
     'read object infomation from file.'
     global objectTable
     fp = open(fileName)
-    magicNumber = fp.readline()
+    magicNumber = getline(fp)
     print magicNumber
 
     o = Object()
@@ -113,18 +128,18 @@ def readObj (fileName) :
     objectTable[o.name] = o
     # read number of segment, number of symbol table entries,
     #+ number of relocation entities.
-    s = fp.readline()
-    args = s.split(' ')
+    s = getline(fp)
+    args = s.split()
     o.nseg = int(args[0], 16)
     o.nsym = int(args[1], 16)
     o.nrel = int(args[2], 16)
-    
+
+    print o.nseg, o.nsym, o.nrel
     # read segsments
     
     for i in range(1, o.nseg + 1) :
-        s = fp.readline()
-        s = s.strip()
-        members = s.split(' ')
+        s = getline(fp)
+        members = s.split()
         info = SegmentInfo(members[0], i, members[1], members[2], members[3])
         
         o.segnames[info.name] = i
@@ -133,9 +148,8 @@ def readObj (fileName) :
     
     # read symbols
     for i in range(1, o.nsym + 1) :
-        s = fp.readline()
-        s = s.strip()
-        members = s.split(' ')
+        s = getline(fp)
+        members = s.split()
         info = Symbol(members[0], i, members[1], members[2], members[3])
         
         o.symnames[info.name] = i
@@ -144,16 +158,18 @@ def readObj (fileName) :
 
     # read rels
     for i in range(0, o.nrel) :
-        s = fp.readline()
-        s = s.strip()
-        members = s.split(' ')
+        s = getline(fp)
+        members = s.split()
         info = Relocation(members[0], members[1], members[2], members[3])
         o.rels.append(info)
 
 
     # read data
     data = ''
-    for line in fp :
+    while True :
+        line = getline(fp)
+        if line == '' :
+            break
         data += line.strip() + ' '
 
     data = data.strip()
@@ -272,8 +288,10 @@ def writeFile_4_3(fileName) :
 
 if __name__ == '__main__' :
 
-    readObj('example.txt')
-    readObj('example1.txt')
+    readObj('ch4main.lk')
+    readObj('ch4calif.lk')
+    readObj('ch4mass.lk')
+    readObj('ch4newyork.lk')
     #writeFile_4_2('output.txt')
     for key in objectTable :
         obj = objectTable[key]
