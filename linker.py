@@ -7,6 +7,8 @@ import allocator
 # object information
 objectTable = {}
 
+# global symbol table
+#globalSymbolTable = {}
 
 class Object(object) :
     'An object file information.'
@@ -45,7 +47,7 @@ class SegmentInfo() :
     readable = False
     writable = False
     present = False
-    #data = ''
+    data = ''
     
     def __init__(self, name, segNo, base, length, flags) :
         self.name = name
@@ -82,6 +84,14 @@ class Symbol() :
         elif type == 'U' :
             self.defined = False
 
+class GlobalSymbol(object) :
+    'global symbol table entity.'
+
+    def __init__(self, name, module, defined) :
+        self.name = name
+        self.module = module
+        self.defined = defined
+
 class Relocation() :
     'relocation entity'
 
@@ -117,13 +127,11 @@ def readObj (fileName) :
     global objectTable
     fp = open(fileName)
     magicNumber = getline(fp)
-    print magicNumber
+    #print magicNumber
 
     o = Object()
 
     o.name = fileName
-
-    print o.name
     
     objectTable[o.name] = o
     # read number of segment, number of symbol table entries,
@@ -134,7 +142,7 @@ def readObj (fileName) :
     o.nsym = int(args[1], 16)
     o.nrel = int(args[2], 16)
 
-    print o.nseg, o.nsym, o.nrel
+    #print o.nseg, o.nsym, o.nrel
     # read segsments
     
     for i in range(1, o.nseg + 1) :
@@ -194,6 +202,33 @@ def readData(obj, data) :
     for i in range(1, obj.nseg + 1) :
         obj.segs[i].data = obj.segs[i].data.strip()
 
+def readGlobalSymbol(objectTable) :
+
+    globalSymbolTable = {}
+    for key in objectTable :
+        module = objectTable[key].name
+        syms = objectTable[key].syms
+
+        for i in range(1, len(syms)) :
+            symbol = syms[i]
+
+            if symbol.name in globalSymbolTable :
+                exist = globalSymbolTable[symbol.name]
+                if exist.defined == True and \
+                   symbol.defined == True :
+                    print 'symbol %s redefines' % (symbol.name)
+                elif exist.defined == False and \
+                     symbol.defined == True :
+                    exist.defined = True
+                    exist.module = key
+
+            else :
+                globalSymbol = GlobalSymbol(symbol.name, key,
+                                            symbol.defined)
+                
+                globalSymbolTable[symbol.name] = globalSymbol
+
+    return globalSymbolTable
 
 # write object file routines
 def my_cmp(s1, s2) :
@@ -288,12 +323,20 @@ def writeFile_4_3(fileName) :
 
 if __name__ == '__main__' :
 
+    #readObj('example.txt')
+    #readObj('example1.txt')
     readObj('ch4main.lk')
     readObj('ch4calif.lk')
     readObj('ch4mass.lk')
     readObj('ch4newyork.lk')
     #writeFile_4_2('output.txt')
-    for key in objectTable :
-        obj = objectTable[key]
-        for name in obj.segnames :
-            print key, name, obj.segs[obj.segnames[name]].data
+    globalSymbolTable = readGlobalSymbol(objectTable)
+
+    for key in globalSymbolTable :
+        globalSymbol = globalSymbolTable[key]
+        print key, globalSymbol.module, globalSymbol.defined
+        
+    #for key in objectTable :
+    #    obj = objectTable[key]
+    #    for name in obj.segnames :
+    #        print key, name, obj.segs[obj.segnames[name]].data
