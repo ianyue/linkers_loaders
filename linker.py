@@ -216,7 +216,7 @@ def readGlobalSymbol(objectTable) :
                 exist = globalSymbolTable[symbol.name]
                 if exist.defined == True and \
                    symbol.defined == True :
-                    print 'symbol %s redefines' % (symbol.name)
+                    print '''symbol '%s' redefines''' % (symbol.name)
                 elif exist.defined == False and \
                      symbol.defined == True :
                     exist.defined = True
@@ -228,6 +228,17 @@ def readGlobalSymbol(objectTable) :
                 
                 globalSymbolTable[symbol.name] = globalSymbol
 
+    # check for undefined symbol
+    delElem = []
+    for key in globalSymbolTable :
+        globalSymbol = globalSymbolTable[key]
+        if globalSymbol.defined == False :
+            delElem .append(key)
+            print '''symbol '%s' undefined''' % (globalSymbol.name)
+
+    for i in range(0, len(delElem)) :
+        del globalSymbolTable[delElem[i]]
+        
     return globalSymbolTable
 
 # write object file routines
