@@ -30,6 +30,9 @@ class Object(object) :
     syms = ['']
     # array of relocs (below)
     rels = []
+    # relocation: base address of segments
+    bases = {}
+
 
     def __init__(self) :
         self.name = ''
@@ -151,7 +154,7 @@ def readObj (fileName) :
         info = SegmentInfo(members[0], i, members[1], members[2], members[3])
         
         o.segnames[info.name] = i
-        o.segs.append(info)
+        o.segs.insert(i, info)
 
     
     # read symbols
@@ -161,7 +164,7 @@ def readObj (fileName) :
         info = Symbol(members[0], i, members[1], members[2], members[3])
         
         o.symnames[info.name] = i
-        o.syms.append(info)
+        o.syms.insert(i, info)
 
 
     # read rels
@@ -202,8 +205,8 @@ def readData(obj, data) :
     for i in range(1, obj.nseg + 1) :
         obj.segs[i].data = obj.segs[i].data.strip()
 
-def readGlobalSymbol(objectTable) :
-
+def createGlobalSymbolTable(objectTable) :
+    'create global symbol table.'
     globalSymbolTable = {}
     for key in objectTable :
         module = objectTable[key].name
@@ -292,7 +295,7 @@ def writeFile_4_1(fileName) :
     fp = open(fileName, 'w')
 
     alloc = allocator.Allocator()
-    statistic = alloc.basicAllocator(segmentTable)
+    statistic = alloc.basicAllocator(objectTable)
 
     fp.write('.text %x - %x\n' %
              (statistic.textStartAddr, statistic.textEndAddr))
@@ -308,7 +311,7 @@ def writeFile_4_2(fileName) :
     fp = open(fileName, 'w')
 
     alloc = allocator.Allocator()
-    statistic = alloc.commonBlockAllocator(segmentTable, symbolTable)
+    statistic = alloc.commonBlockAllocator(objectTable)
     fp.write('.text %x - %x\n' %
              (statistic.textStartAddr, statistic.textEndAddr))
     fp.write('.data %x - %x\n' %
@@ -332,22 +335,26 @@ def writeFile_4_3(fileName) :
              (statistic.RWStartAddr, statistic.RWEndAddr))
     fp.close()
 
+def writeFile_5_1(globalSymbolTable, fileName) :
+    'write object code to file. (Project 5.1)'
+    fp = open(fileName, 'w')
+    for key in globalSymbolTable :
+        globalSymbol = globalSymbolTable[key]
+        fp.write('%s %s %s\n' % (key, globalSymbol.module, globalSymbol.defined))
+
+    fp.close()
+
+
 if __name__ == '__main__' :
 
-    #readObj('example.txt')
-    #readObj('example1.txt')
     readObj('ch4main.lk')
     readObj('ch4calif.lk')
     readObj('ch4mass.lk')
     readObj('ch4newyork.lk')
-    #writeFile_4_2('output.txt')
-    globalSymbolTable = readGlobalSymbol(objectTable)
+    globalSymbolTable = createGlobalSymbolTable(objectTable)
 
+    #writeFile_5_1(globalSymbolTable, 'output-5-1.txt')
+    writeFile_4_2("output.txt")
     for key in globalSymbolTable :
         globalSymbol = globalSymbolTable[key]
         print key, globalSymbol.module, globalSymbol.defined
-        
-    #for key in objectTable :
-    #    obj = objectTable[key]
-    #    for name in obj.segnames :
-    #        print key, name, obj.segs[obj.segnames[name]].data
